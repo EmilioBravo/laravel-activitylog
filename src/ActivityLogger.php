@@ -3,12 +3,11 @@
 namespace Spatie\Activitylog;
 
 use Illuminate\Auth\AuthManager;
-use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Traits\Macroable;
-use Spatie\Activitylog\Exceptions\CouldNotLogActivity;
-use Spatie\Activitylog\Exceptions\InvalidConfiguration;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Traits\Macroable;
+use Illuminate\Contracts\Config\Repository;
+use Spatie\Activitylog\Exceptions\CouldNotLogActivity;
 
 class ActivityLogger
 {
@@ -39,7 +38,11 @@ class ActivityLogger
 
         $authDriver = $config['laravel-activitylog']['default_auth_driver'] ?? $auth->getDefaultDriver();
 
-        $this->causedBy = $auth->guard($authDriver)->user();
+        if (starts_with(app()->version(), '5.1')) {
+            $this->causedBy = $auth->driver($authDriver)->user();
+        } else {
+            $this->causedBy = $auth->guard($authDriver)->user();
+        }
 
         $this->logName = $config['laravel-activitylog']['default_log_name'];
 
@@ -125,9 +128,7 @@ class ActivityLogger
             return;
         }
 
-        $activityModelClassName = $this->determineActivityModel();
-
-        $activity = new $activityModelClassName();
+        $activity = ActivitylogServiceProvider::getActivityModelInstance();
 
         if ($this->performedOn) {
             $activity->subject()->associate($this->performedOn);
@@ -183,25 +184,13 @@ class ActivityLogger
 
             $attributeValue = $activity->$attribute;
 
+            if (is_null($attributeValue)) {
+                return $match;
+            }
+
             $attributeValue = $attributeValue->toArray();
 
             return array_get($attributeValue, $propertyName, $match);
         }, $description);
-    }
-
-    /**
-     * @throws \Spatie\Activitylog\Exceptions\InvalidConfiguration
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     */
-    public function determineActivityModel()
-    {
-        $activityModel = config('laravel-activitylog.activity_model') ?? Activity::class;
-
-        if (! is_a($activityModel, Activity::class, true)) {
-            throw InvalidConfiguration::modelIsNotValid($activityModel);
-        }
-
-        return $activityModel;
     }
 }

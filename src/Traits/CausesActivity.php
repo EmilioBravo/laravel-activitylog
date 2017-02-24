@@ -2,14 +2,14 @@
 
 namespace Spatie\Activitylog\Traits;
 
+use Spatie\Activitylog\ActivitylogServiceProvider;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Spatie\Activitylog\Models\Activity;
 
 trait CausesActivity
 {
     public function caused(): MorphMany
     {
-        return $this->morphMany(Activity::class, 'causer');
+        return $this->morphMany(ActivitylogServiceProvider::determineActivityModel(), 'causer');
     }
 
     /** @deprecated Use activity() instead */

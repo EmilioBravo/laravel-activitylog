@@ -4,10 +4,10 @@ namespace Spatie\Activitylog\Test;
 
 use Auth;
 use Illuminate\Support\Collection;
-use Spatie\Activitylog\Exceptions\CouldNotLogActivity;
 use Spatie\Activitylog\Models\Activity;
-use Spatie\Activitylog\Test\Models\Article;
 use Spatie\Activitylog\Test\Models\User;
+use Spatie\Activitylog\Test\Models\Article;
+use Spatie\Activitylog\Exceptions\CouldNotLogActivity;
 
 class ActivityloggerTest extends TestCase
 {
@@ -201,5 +201,27 @@ class ActivityloggerTest extends TestCase
         activity()->log($description);
 
         $this->assertEquals($description, $this->getLastActivity()->description);
+    }
+
+    public function it_returns_an_instance_of_the_activity_after_logging()
+    {
+        $activityModel = activity()->log('test');
+
+        $this->assertInstanceOf(Activity::class, $activityModel);
+    }
+
+    /** @test */
+    public function it_returns_an_instance_of_the_activity_log_after_logging_when_using_a_custom_model()
+    {
+        $activityClass = new class extends Activity {
+        };
+
+        $activityClassName = get_class($activityClass);
+
+        $this->app['config']->set('laravel-activitylog.activity_model', $activityClassName);
+
+        $activityModel = activity()->log('test');
+
+        $this->assertInstanceOf($activityClassName, $activityModel);
     }
 }
