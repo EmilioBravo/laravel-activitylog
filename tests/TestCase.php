@@ -2,12 +2,12 @@
 
 namespace Spatie\Activitylog\Test;
 
-use Illuminate\Database\Schema\Blueprint;
-use Orchestra\Testbench\TestCase as OrchestraTestCase;
-use Spatie\Activitylog\ActivitylogServiceProvider;
 use Spatie\Activitylog\Models\Activity;
-use Spatie\Activitylog\Test\Models\Article;
 use Spatie\Activitylog\Test\Models\User;
+use Illuminate\Database\Schema\Blueprint;
+use Spatie\Activitylog\Test\Models\Article;
+use Spatie\Activitylog\ActivitylogServiceProvider;
+use Orchestra\Testbench\TestCase as OrchestraTestCase;
 
 abstract class TestCase extends OrchestraTestCase
 {
@@ -41,9 +41,9 @@ abstract class TestCase extends OrchestraTestCase
         $app['config']->set('database.default', 'sqlite');
 
         $app['config']->set('database.connections.sqlite', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => $this->getTempDirectory().'/database.sqlite',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
 
         $app['config']->set('auth.providers.users.model', User::class);
@@ -81,12 +81,17 @@ abstract class TestCase extends OrchestraTestCase
     protected function createTables(...$tableNames)
     {
         collect($tableNames)->each(function (string $tableName) {
-            $this->app['db']->connection()->getSchemaBuilder()->create($tableName, function (Blueprint $table) {
+            $this->app['db']->connection()->getSchemaBuilder()->create($tableName, function (Blueprint $table) use ($tableName) {
                 $table->increments('id');
                 $table->string('name')->nullable();
                 $table->string('text')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
+
+                if ($tableName === 'articles') {
+                    $table->integer('user_id')->unsigned()->nullable();
+                    $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                }
             });
         });
     }

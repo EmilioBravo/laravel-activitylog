@@ -3,6 +3,7 @@
 namespace Spatie\Activitylog\Test;
 
 use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Test\Models\User;
 use Spatie\Activitylog\Test\Models\Article;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -32,6 +33,45 @@ class DetectsChangesTest extends TestCase
         $expectedChanges = [
             'attributes' => [
                 'name' => 'my name',
+            ],
+        ];
+
+        $this->assertEquals($expectedChanges, $this->getLastActivity()->changes->toArray());
+    }
+
+    /** @test */
+    public function it_can_store_the_relation_values_when_creating_a_model()
+    {
+        $articleClass = new class() extends Article {
+            static $logAttributes = ['name', 'text', 'user.name'];
+
+            use LogsActivity;
+        };
+
+        $user = User::create([
+            'name' => 'user name',
+        ]);
+
+        $article = $articleClass::create([
+            'name' => 'original name',
+            'text' => 'original text',
+            'user_id' => $user->id,
+        ]);
+
+        $article->name = 'updated name';
+        $article->text = 'updated text';
+        $article->save();
+
+        $expectedChanges = [
+            'attributes' => [
+                'name' => 'updated name',
+                'text' => 'updated text',
+                'user.name' => 'user name',
+            ],
+            'old' => [
+                'name' => 'original name',
+                'text' => 'original text',
+                'user.name' => 'user name',
             ],
         ];
 

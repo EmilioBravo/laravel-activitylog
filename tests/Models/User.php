@@ -2,9 +2,9 @@
 
 namespace Spatie\Activitylog\Test\Models;
 
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\CausesActivity;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class User extends Model implements Authenticatable
 {
@@ -71,5 +71,10 @@ class User extends Model implements Authenticatable
     public function getRememberTokenName()
     {
         return 'tokenName';
+    }
+
+    public function articles()
+    {
+        return $this->hasMany(Article::class);
     }
 }

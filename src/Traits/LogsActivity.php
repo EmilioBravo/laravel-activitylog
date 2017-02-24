@@ -2,11 +2,13 @@
 
 namespace Spatie\Activitylog\Traits;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 use Spatie\Activitylog\ActivityLogger;
+use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\ActivitylogServiceProvider;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait LogsActivity
 {
@@ -39,7 +41,7 @@ trait LogsActivity
 
     public function activity(): MorphMany
     {
-        return $this->morphMany(Activity::class, 'subject');
+        return $this->morphMany(ActivitylogServiceProvider::determineActivityModel(), 'subject');
     }
 
     public function getDescriptionForEvent(string $eventName): string
@@ -67,7 +69,7 @@ trait LogsActivity
             'deleted',
         ]);
 
-        if (collect(class_uses(__CLASS__))->contains(\Illuminate\Database\Eloquent\SoftDeletes::class)) {
+        if (collect(class_uses(__CLASS__))->contains(SoftDeletes::class)) {
             $events->push('restored');
         }
 
